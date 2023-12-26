@@ -1,4 +1,45 @@
 import socket
+import struct
+from dataclasses import dataclass
+
+
+@dataclass
+class DnsMessage:
+    id: int
+    qr: int
+    opcode: int
+    aa: int
+    tc: int
+    rd: int
+    ra: int
+    z: int
+    rcode: int
+    qdcount: int
+    ancount: int
+    nscount: int
+    arcount: int
+
+    def pack(self):
+        flags = (
+            self.qr << 15
+            | self.opcode << 11
+            | self.aa << 10
+            | self.tc << 9
+            | self.rd << 8
+            | self.ra << 7
+            | self.z << 4
+            | self.rcode
+        )
+
+        return struct.pack(
+            ">HHHHHH",
+            self.id,
+            flags,
+            self.qdcount,
+            self.ancount,
+            self.nscount,
+            self.arcount,
+        )
 
 
 def main():
@@ -13,10 +54,25 @@ def main():
     while True:
         try:
             buf, source = udp_socket.recvfrom(512)
+            resp = DnsMessage(
+                id=1234,
+                qr=1,
+                opcode=0,
+                aa=0,
+                tc=0,
+                rd=0,
+                ra=0,
+                z=0,
+                rcode=0,
+                qdcount=0,
+                ancount=0,
+                nscount=0,
+                arcount=0,
+            ).pack()
 
-            response = b""
+            # response = b""
 
-            udp_socket.sendto(response, source)
+            udp_socket.sendto(resp, source)
         except Exception as e:
             print(f"Error receiving data: {e}")
             break
