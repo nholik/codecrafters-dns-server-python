@@ -70,8 +70,8 @@ def main():
                 arcount=0,
             ).pack()
 
-            resp_name = b"\x0ccodecrafters\x02io"
-            resp_type = b"0x001"
+            resp_name =  b"\x0ccodecrafters\x02io\x00"
+            resp_type =  b"0x001"
             resp_class = b"0x001"
 
             # response = b""
