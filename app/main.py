@@ -54,7 +54,7 @@ def main():
     while True:
         try:
             buf, source = udp_socket.recvfrom(512)
-            resp = DnsMessage(
+            resp_header = DnsMessage(
                 id=1234,
                 qr=1,
                 opcode=0,
@@ -64,13 +64,18 @@ def main():
                 ra=0,
                 z=0,
                 rcode=0,
-                qdcount=0,
+                qdcount=1,
                 ancount=0,
                 nscount=0,
                 arcount=0,
             ).pack()
 
+            resp_name = b"\x0ccodecrafters\x02io"
+            resp_type = b"0x001"
+            resp_class = b"0x001"
+
             # response = b""
+            resp = resp_header + resp_name + resp_type + resp_class
 
             udp_socket.sendto(resp, source)
         except Exception as e:
