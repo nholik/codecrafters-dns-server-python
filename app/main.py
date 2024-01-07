@@ -71,8 +71,8 @@ def main():
             ).pack()
 
             resp_name = b"\x0ccodecrafters\x02io\x00"
-            resp_type = (1).to_bytes(2, byteorder="big")
-            resp_class = (1).to_bytes(2, byteorder="big")
+            resp_type = b"\x00\x01"
+            resp_class = b"\x00\x01"
 
             # response = b""
             resp = resp_header + resp_name + resp_type + resp_class
