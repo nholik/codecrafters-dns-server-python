@@ -103,7 +103,7 @@ def main():
         try:
             buf, source = udp_socket.recvfrom(512)
             resp_header = DnsResponseHeader(
-                id=1234,
+                id=int.from_bytes(buf[0:2], byteorder="big"),
                 qr=1,
                 opcode=0,
                 aa=0,
