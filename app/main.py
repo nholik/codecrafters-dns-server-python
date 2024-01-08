@@ -102,16 +102,21 @@ def main():
     while True:
         try:
             buf, source = udp_socket.recvfrom(512)
+            #print(buf)
+            req_header = struct.unpack(">H", buf[2:4])
+            op_code = (req_header[0] >> 1) & 15
+            # rd = req_header[0] & 256 != 0
+            #print(req_header)
             resp_header = DnsResponseHeader(
                 id=int.from_bytes(buf[0:2], byteorder="big"),
                 qr=1,
-                opcode=0,
+                opcode=op_code,
                 aa=0,
                 tc=0,
-                rd=0,
+                rd=(req_header[0] & 256 != 0),
                 ra=0,
                 z=0,
-                rcode=0,
+                rcode=(0 if op_code == 0 else 4),
                 qdcount=1,
                 ancount=1,
                 nscount=0,
@@ -124,6 +129,7 @@ def main():
             ).pack()
 
             resp = resp_header + resp_question + resp_answer
+            # print(resp)
 
             udp_socket.sendto(resp, source)
         except Exception as e:
