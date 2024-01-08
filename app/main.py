@@ -120,7 +120,7 @@ def main():
 
             resp_question = DnsQuestion(["codecrafters", "io"], 1, 1).pack()
             resp_answer = DnsAnswer(
-                name="codecrafters.io", type=1, cls=1, ttl=300, data="8.8.8.8"
+                name="codecrafters.io", type=1, cls=1, ttl=60, data="8.8.8.8"
             ).pack()
             print(resp_answer)
 
