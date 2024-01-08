@@ -13,12 +13,12 @@ class DnsAnswer:
     data: str
 
     def pack(self):
-        packed_name = self.name.encode() + b"\x00"
+        packed_name = b"\x00" + self.name.encode()
         type_bytes = (1).to_bytes(2, byteorder="big")
         class_bytes = (1).to_bytes(2, byteorder="big")
         ttl_bytes = (self.ttl).to_bytes(4, byteorder="big")
         length_bytes = (len(self.name)).to_bytes(4, byteorder="big")
-        data_bytes = b"\x08\x08\x08\x08"
+        data_bytes = struct.pack("!BBBB", 8, 8, 8, 8)
 
         return (
             packed_name
