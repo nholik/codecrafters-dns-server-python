@@ -122,7 +122,6 @@ def main():
             resp_answer = DnsAnswer(
                 name="codecrafters.io", type=1, cls=1, ttl=60, data="8.8.8.8"
             ).pack()
-            print(resp_answer)
 
             resp = resp_header + resp_question + resp_answer
 
