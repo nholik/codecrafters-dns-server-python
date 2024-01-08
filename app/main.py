@@ -5,6 +5,24 @@ from typing import List
 
 
 @dataclass
+class DnsAnswer:
+    name: str
+    type: int
+    cls: int
+    ttl: int
+    data: str
+
+    def pack(self):
+        packed_name = self.name.encode()
+        type_bytes = (1).to_bytes(2, byteorder="big")
+        class_bytes = (1).to_bytes(2, byteorder="big")
+        ttl_bytes = (len(self.name)).to_bytes(4, byteorder="big")
+        data_bytes = b"\x08\x08\x08\x08"
+
+        return packed_name + type_bytes + class_bytes + ttl_bytes + data_bytes
+
+
+@dataclass
 class DnsQuestion:
     names: List[str]
     type: int
@@ -93,14 +111,11 @@ def main():
             ).pack()
 
             resp_question = DnsQuestion(["codecrafters", "io"], 1, 1).pack()
-            print(resp_question)
+            resp_answer = DnsAnswer(
+                name="codecrafters", type=1, cls=1, ttl=300, data="8.8.8.8"
+            ).pack()
 
-            # resp_name = b"\x0ccodecrafters\x02io\x00"
-            # resp_type = b"\x00\x01"
-            # resp_class = b"\x00\x01"
-
-            # response = b""
-            resp = resp_header + resp_question
+            resp = resp_header + resp_question + resp_answer
 
             udp_socket.sendto(resp, source)
         except Exception as e:
