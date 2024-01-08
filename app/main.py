@@ -1,10 +1,31 @@
 import socket
 import struct
 from dataclasses import dataclass
+from typing import List
 
 
 @dataclass
-class DnsMessage:
+class DnsQuestion:
+    names: List[str]
+    type: int
+    cls: int
+
+    def pack(self):
+        packed_names = b""
+        for n in self.names:
+            name_ln = len(n)
+            packed_names += name_ln.to_bytes(1, byteorder="big")
+
+        packed_names += b"\x00"
+
+        type_bytes = (1).to_bytes(2, byteorder="big")
+        cls_bytes = (1).to_bytes(2, byteorder="big")
+
+        return packed_names + type_bytes + cls_bytes
+
+
+@dataclass
+class DnsResponseHeader:
     id: int
     qr: int
     opcode: int
@@ -54,7 +75,7 @@ def main():
     while True:
         try:
             buf, source = udp_socket.recvfrom(512)
-            resp_header = DnsMessage(
+            resp_header = DnsResponseHeader(
                 id=1234,
                 qr=1,
                 opcode=0,
@@ -70,12 +91,14 @@ def main():
                 arcount=0,
             ).pack()
 
-            resp_name = b"\x0ccodecrafters\x02io\x00"
-            resp_type = b"\x00\x01"
-            resp_class = b"\x00\x01"
+            resp_question = DnsQuestion(["codecrafters", "io"], 1, 1).pack()
+
+            # resp_name = b"\x0ccodecrafters\x02io\x00"
+            # resp_type = b"\x00\x01"
+            # resp_class = b"\x00\x01"
 
             # response = b""
-            resp = resp_header + resp_name + resp_type + resp_class
+            resp = resp_header + resp_question
 
             udp_socket.sendto(resp, source)
         except Exception as e:
