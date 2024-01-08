@@ -102,11 +102,12 @@ def main():
     while True:
         try:
             buf, source = udp_socket.recvfrom(512)
-            #print(buf)
+            # print(buf)
             req_header = struct.unpack(">H", buf[2:4])
             op_code = (req_header[0] >> 1) & 15
             # rd = req_header[0] & 256 != 0
-            #print(req_header)
+            print(req_header)
+            print(op_code)
             resp_header = DnsResponseHeader(
                 id=int.from_bytes(buf[0:2], byteorder="big"),
                 qr=1,
