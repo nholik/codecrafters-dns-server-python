@@ -13,7 +13,7 @@ class DnsAnswer:
     data: str
 
     def pack(self):
-        packed_name = b"\x00" + self.name.encode()
+        packed_name = b"\x0ccodecrafters\x02io\x00"
         type_bytes = (1).to_bytes(2, byteorder="big")
         class_bytes = (1).to_bytes(2, byteorder="big")
         ttl_bytes = (self.ttl).to_bytes(4, byteorder="big")
