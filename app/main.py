@@ -104,7 +104,7 @@ def main():
             buf, source = udp_socket.recvfrom(512)
             # print(buf)
             req_header = struct.unpack(">H", buf[2:4])
-            op_code = (req_header[0] >> 1) & 15
+            op_code = (req_header[0] >> 11) & 15
             # rd = req_header[0] & 256 != 0
             print(req_header)
             print(op_code)
