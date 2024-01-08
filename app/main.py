@@ -13,7 +13,7 @@ class DnsAnswer:
     data: str
 
     def pack(self):
-        packed_name = self.name.encode()
+        packed_name = self.name.encode() + b"\x00"
         type_bytes = (1).to_bytes(2, byteorder="big")
         class_bytes = (1).to_bytes(2, byteorder="big")
         ttl_bytes = (self.ttl).to_bytes(4, byteorder="big")
@@ -120,8 +120,9 @@ def main():
 
             resp_question = DnsQuestion(["codecrafters", "io"], 1, 1).pack()
             resp_answer = DnsAnswer(
-                name="codecrafters", type=1, cls=1, ttl=300, data="8.8.8.8"
+                name="codecrafters.io", type=1, cls=1, ttl=300, data="8.8.8.8"
             ).pack()
+            print(resp_answer)
 
             resp = resp_header + resp_question + resp_answer
 
