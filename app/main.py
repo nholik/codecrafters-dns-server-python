@@ -15,6 +15,7 @@ class DnsQuestion:
         for n in self.names:
             name_ln = len(n)
             packed_names += name_ln.to_bytes(1, byteorder="big")
+            packed_names += n.encode()
 
         packed_names += b"\x00"
 
@@ -92,6 +93,7 @@ def main():
             ).pack()
 
             resp_question = DnsQuestion(["codecrafters", "io"], 1, 1).pack()
+            print(resp_question)
 
             # resp_name = b"\x0ccodecrafters\x02io\x00"
             # resp_type = b"\x00\x01"
