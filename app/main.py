@@ -6,42 +6,53 @@ from typing import List
 
 @dataclass
 class DnsAnswer:
-    name: str
+    name: bytes
     type: int
     cls: int
     ttl: int
     data: str
 
     def pack(self):
-        packed_name = b"\x0ccodecrafters\x02io\x00"
+        # packed_name = b"\x0ccodecrafters\x02io\x00"
         type_bytes = (1).to_bytes(2, byteorder="big")
         class_bytes = (1).to_bytes(2, byteorder="big")
         ttl_bytes = (self.ttl).to_bytes(4, byteorder="big")
-        length_bytes = (len(self.name)).to_bytes(4, byteorder="big")
+        length_bytes = (4).to_bytes(2, byteorder="big")
         data_bytes = struct.pack("!BBBB", 8, 8, 8, 8)
 
         return (
-            packed_name
-            + type_bytes
-            + class_bytes
-            + ttl_bytes
-            + length_bytes
-            + data_bytes
+            self.name + type_bytes + class_bytes + ttl_bytes + length_bytes + data_bytes
         )
 
 
 @dataclass
 class DnsQuestion:
-    names: List[str]
+    question_data: bytes
     type: int
     cls: int
 
     def pack(self):
         packed_names = b""
-        for n in self.names:
-            name_ln = len(n)
-            packed_names += name_ln.to_bytes(1, byteorder="big")
-            packed_names += n.encode()
+        question_offset = 0
+
+        question_len = int.from_bytes(self.question_data[0:1], byteorder="big")
+
+        while question_len > 0:
+            name = struct.unpack(
+                "c" * question_len,
+                self.question_data[
+                    question_offset + 1 : question_offset + question_len + 1
+                ],
+            )
+            packed_names += len(name).to_bytes(1, byteorder="big")
+            for c in name:
+                packed_names += c
+            question_offset += question_len + 1
+
+            question_len = int.from_bytes(
+                self.question_data[question_offset : question_offset + 1],
+                byteorder="big",
+            )
 
         packed_names += b"\x00"
 
@@ -105,9 +116,11 @@ def main():
             # print(buf)
             req_header = struct.unpack(">H", buf[2:4])
             op_code = (req_header[0] >> 11) & 15
+
             # rd = req_header[0] & 256 != 0
-            print(req_header)
-            print(op_code)
+            # print(req_header)
+            # print(op_code)
+
             resp_header = DnsResponseHeader(
                 id=int.from_bytes(buf[0:2], byteorder="big"),
                 qr=1,
@@ -124,13 +137,14 @@ def main():
                 arcount=0,
             ).pack()
 
-            resp_question = DnsQuestion(["codecrafters", "io"], 1, 1).pack()
+            resp_question = DnsQuestion(buf[12:], 1, 1).pack()
+            names = resp_question[0 : len(resp_question) - 4]
+
             resp_answer = DnsAnswer(
-                name="codecrafters.io", type=1, cls=1, ttl=60, data="8.8.8.8"
+                name=names, type=1, cls=1, ttl=60, data="8.8.8.8"
             ).pack()
 
             resp = resp_header + resp_question + resp_answer
-            # print(resp)
 
             udp_socket.sendto(resp, source)
         except Exception as e:
