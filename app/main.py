@@ -160,8 +160,8 @@ def main():
             print(question)
             while question.has_next_question:
                 print(question)
-                print(buf[question.next_question])
-                question = DnsQuestion(buf[question.next_question])
+                print(buf[12+question.next_question:])
+                question = DnsQuestion(buf[12 + question.next_question :])
                 all_questions.append(question)
                 print(question)
 
