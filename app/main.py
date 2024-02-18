@@ -1,7 +1,6 @@
 import socket
 import struct
 from dataclasses import dataclass
-from typing import List
 
 
 @dataclass
@@ -25,41 +24,59 @@ class DnsAnswer:
         )
 
 
-@dataclass
 class DnsQuestion:
-    question_data: bytes
-    type: int
-    cls: int
+    __type: bytes
+    __cls: bytes
+    __next_offset: int
+    __packed_names: bytes
+    __input_data: bytes
 
-    def pack(self):
-        packed_names = b""
+    @property
+    def packed(self):
+        return self.__packed_names + self.__type + self.__cls
+
+    @property
+    def names(self):
+        return self.__packed_names
+
+    @property
+    def next_question(self):
+        return self.__next_offset
+
+    @property
+    def is_compressed(self):
+        return (self.__input_data[0] & 0xC0) == 0xC0
+
+    def __init__(self, question_data):
+        self.__input_data = question_data
+        self.__type = (1).to_bytes(2, byteorder="big")
+        self.__cls = (1).to_bytes(2, byteorder="big")
+
+        self.__packed_names = b""
         question_offset = 0
 
-        question_len = int.from_bytes(self.question_data[0:1], byteorder="big")
+        question_len = int.from_bytes(question_data[0:1], byteorder="big")
 
         while question_len > 0:
             name = struct.unpack(
                 "c" * question_len,
-                self.question_data[
-                    question_offset + 1 : question_offset + question_len + 1
-                ],
+                question_data[question_offset + 1 : question_offset + question_len + 1],
             )
-            packed_names += len(name).to_bytes(1, byteorder="big")
+            self.__packed_names += len(name).to_bytes(1, byteorder="big")
             for c in name:
-                packed_names += c
+                self.__packed_names += c
             question_offset += question_len + 1
 
             question_len = int.from_bytes(
-                self.question_data[question_offset : question_offset + 1],
+                question_data[question_offset : question_offset + 1],
                 byteorder="big",
             )
 
-        packed_names += b"\x00"
+        self.__packed_names += b"\x00"
+        self.__next_offset = question_offset
 
-        type_bytes = (1).to_bytes(2, byteorder="big")
-        cls_bytes = (1).to_bytes(2, byteorder="big")
-
-        return packed_names + type_bytes + cls_bytes
+    def __repr__(self):
+        return f"Names: {self.__packed_names}, Compressed: {self.is_compressed}, NextOffset: {self.__next_offset}"
 
 
 @dataclass
@@ -113,13 +130,8 @@ def main():
     while True:
         try:
             buf, source = udp_socket.recvfrom(512)
-            # print(buf)
             req_header = struct.unpack(">H", buf[2:4])
             op_code = (req_header[0] >> 11) & 15
-
-            # rd = req_header[0] & 256 != 0
-            # print(req_header)
-            # print(op_code)
 
             resp_header = DnsResponseHeader(
                 id=int.from_bytes(buf[0:2], byteorder="big"),
@@ -137,14 +149,15 @@ def main():
                 arcount=0,
             ).pack()
 
-            resp_question = DnsQuestion(buf[12:], 1, 1).pack()
-            names = resp_question[0 : len(resp_question) - 4]
+            question = DnsQuestion(buf[12:])
+            print(f"original buff: {buf}")
+            print(question)
 
             resp_answer = DnsAnswer(
-                name=names, type=1, cls=1, ttl=60, data="8.8.8.8"
+                name=question.names, type=1, cls=1, ttl=60, data="8.8.8.8"
             ).pack()
 
-            resp = resp_header + resp_question + resp_answer
+            resp = resp_header + question.packed + resp_answer
 
             udp_socket.sendto(resp, source)
         except Exception as e:
