@@ -44,6 +44,10 @@ class DnsQuestion:
         return self.__next_offset
 
     @property
+    def has_next_question(self):
+        return self.__next_offset > len(self.__input_data) - 5
+
+    @property
     def is_compressed(self):
         return (self.__input_data[0] & 0xC0) == 0xC0
 
@@ -76,7 +80,7 @@ class DnsQuestion:
         self.__next_offset = question_offset
 
     def __repr__(self):
-        return f"Names: {self.__packed_names}, Compressed: {self.is_compressed}, NextOffset: {self.__next_offset}, SourceLen: {len(self.__input_data)}"
+        return f"Names: {self.__packed_names}, Compressed: {self.is_compressed}, Has Next Question: {self.has_next_question}"
 
 
 @dataclass
@@ -149,12 +153,20 @@ def main():
                 arcount=0,
             ).pack()
 
-            question = DnsQuestion(buf[12:])
             print(f"original buff: {buf}")
+            all_questions = []
+            question = DnsQuestion(buf[12:])
+            all_questions.append(question)
             print(question)
+            while question.has_next_question:
+                print(question)
+                print(buf[question.next_question])
+                question = DnsQuestion(buf[question.next_question])
+                all_questions.append(question)
+                print(question)
 
             resp_answer = DnsAnswer(
-                name=question.names, type=1, cls=1, ttl=60, data="8.8.8.8"
+                name=all_questions[0].names, type=1, cls=1, ttl=60, data="8.8.8.8"
             ).pack()
 
             resp = resp_header + question.packed + resp_answer
