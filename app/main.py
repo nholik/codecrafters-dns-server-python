@@ -76,7 +76,7 @@ class DnsQuestion:
         self.__next_offset = question_offset
 
     def __repr__(self):
-        return f"Names: {self.__packed_names}, Compressed: {self.is_compressed}, NextOffset: {self.__next_offset}"
+        return f"Names: {self.__packed_names}, Compressed: {self.is_compressed}, NextOffset: {self.__next_offset}, SourceLen: {len(self.__input_data)}"
 
 
 @dataclass
