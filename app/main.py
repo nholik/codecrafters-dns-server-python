@@ -41,11 +41,11 @@ class DnsQuestion:
 
     @property
     def next_question(self):
-        return self.__next_offset
+        return self.__next_offset + 4
 
     @property
     def has_next_question(self):
-        return self.__next_offset < len(self.__input_data) - 5
+        return self.__next_offset < len(self.__input_data) - 1
 
     @property
     def is_compressed(self):
@@ -160,7 +160,7 @@ def main():
             print(question)
             while question.has_next_question:
                 print(question)
-                print(buf[12+question.next_question:])
+                print(buf[(12 + question.next_question) :])
                 question = DnsQuestion(buf[12 + question.next_question :])
                 all_questions.append(question)
                 print(question)
