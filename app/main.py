@@ -45,7 +45,7 @@ class DnsQuestion:
 
     @property
     def has_next_question(self):
-        return self.__next_offset > len(self.__input_data) - 5
+        return self.__next_offset < len(self.__input_data) - 5
 
     @property
     def is_compressed(self):
